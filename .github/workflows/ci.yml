@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Install dependencies
+    - name: Install dependencies
+      run: sudo apt-get install -y cmake g++ libgtest-dev
+
+    # Step 3: Build Google Test (if it's not pre-installed)
+    - name: Build Google Test
+      run: |
+        cd /usr/src/googletest
+        sudo cmake .
+        sudo make
+        sudo cp *.a /usr/lib
+
+    # Step 4: Build your project and run tests
+    - name: Build and Run Google Tests
+      run: |
+        mkdir -p build
+        cd build
+        cmake ..
+        make
+        ./runTests --gtest_output=xml:test-results.xml
+
+    # Step 5: Upload the test results in JUnit format
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: build/test-results.xml
